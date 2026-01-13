@@ -1,0 +1,5 @@
+{
+  "name": "FlashMind AI",
+  "description": "An intelligent flashcard application powered by Gemini. Create decks instantly from any topic, study with interactive flipping cards, and track your learning progress.",
+  "requestFramePermissions": []
+}
