@@ -1,13 +1,14 @@
 import React from 'react';
 import { Deck } from '../types';
-import { ArrowLeft, CheckCircle2, Circle, PieChart, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, PieChart, AlertCircle, Pencil } from 'lucide-react';
 
 interface DeckStatsProps {
   deck: Deck;
   onBack: () => void;
+  onEdit: () => void;
 }
 
-export const DeckStats: React.FC<DeckStatsProps> = ({ deck, onBack }) => {
+export const DeckStats: React.FC<DeckStatsProps> = ({ deck, onBack, onEdit }) => {
   const totalCards = deck.cards.length;
   const masteredCount = deck.cards.filter(c => c.mastered).length;
   const learningCount = totalCards - masteredCount;
@@ -21,17 +22,26 @@ export const DeckStats: React.FC<DeckStatsProps> = ({ deck, onBack }) => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button 
-          onClick={onBack}
-          className="p-2 -ml-2 text-slate-400 hover:text-slate-800 hover:bg-white rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">{deck.title} Stats</h2>
-          <p className="text-slate-500 text-sm">Track your learning progress</p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onBack}
+            className="p-2 -ml-2 text-slate-400 hover:text-slate-800 hover:bg-white rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">{deck.title} Stats</h2>
+            <p className="text-slate-500 text-sm">Track your learning progress</p>
+          </div>
         </div>
+        <button 
+          onClick={onEdit}
+          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors rounded-full"
+          title="Edit Deck"
+        >
+          <Pencil className="w-5 h-5" />
+        </button>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">

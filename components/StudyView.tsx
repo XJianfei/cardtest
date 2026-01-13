@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Deck } from '../types';
 import { CardFlip } from './CardFlip';
-import { ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, RotateCcw, Pencil } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface StudyViewProps {
   deck: Deck;
   onExit: () => void;
   onUpdateDeck: (updatedDeck: Deck) => void;
+  onEdit: () => void;
 }
 
-export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck }) => {
+export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck, onEdit }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   // Track results by card ID to allow re-answering/navigation without double counting
@@ -146,7 +147,13 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
           <h3 className="font-semibold text-slate-800">{deck.title}</h3>
           <p className="text-xs text-slate-400">{currentIndex + 1} of {deck.cards.length}</p>
         </div>
-        <div className="w-10" /> {/* Spacer */}
+        <button 
+          onClick={onEdit}
+          className="p-2 -mr-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors rounded-full"
+          title="Edit Deck"
+        >
+          <Pencil className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Progress Bar */}

@@ -37,14 +37,9 @@ export default function App() {
 
   const handleCreateDeck = (newDeck: Deck) => {
     setDecks([newDeck, ...decks]);
-    // If it's a manually created deck (created with 'New Deck' title by default in DeckCreator), 
-    // we might want to let them edit it immediately.
-    if (newDeck.title === "New Deck") {
-      setActiveDeckId(newDeck.id);
-      setView(AppView.EDIT_DECK);
-    } else {
-      setView(AppView.DASHBOARD);
-    }
+    // Always allow editing immediately after creation so user can review AI cards
+    setActiveDeckId(newDeck.id);
+    setView(AppView.EDIT_DECK);
   };
 
   const handleDeleteDeck = (e: React.MouseEvent, id: string) => {
@@ -262,6 +257,7 @@ export default function App() {
           <DeckStats
             deck={activeDeck}
             onBack={() => setView(AppView.DASHBOARD)}
+            onEdit={() => setView(AppView.EDIT_DECK)}
           />
         )}
         
@@ -279,6 +275,7 @@ export default function App() {
             deck={activeDeck}
             onExit={() => setView(AppView.DASHBOARD)}
             onUpdateDeck={handleUpdateDeckStudyProgress}
+            onEdit={() => setView(AppView.EDIT_DECK)}
           />
         )}
       </main>
