@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Plus, LayoutGrid, BrainCircuit, Github, Trash2, Play, Pencil, BarChart3, PieChart } from 'lucide-react';
+import { Plus, LayoutGrid, BrainCircuit, Github, Trash2, Play, Pencil, BarChart3, PieChart, Shuffle } from 'lucide-react';
 import { Deck, AppView } from './types';
 import { DeckCreator } from './components/DeckCreator';
 import { DeckEditor } from './components/DeckEditor';
@@ -222,8 +223,13 @@ export default function App() {
                           <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-500 rounded-md">
                             {deck.cards.length} cards
                           </span>
-                          <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                            <Play className="w-4 h-4 ml-0.5" />
+                          <div className="flex gap-2">
+                             <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-slate-200 transition-colors" title="Shuffle & Start">
+                              <Shuffle className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600" />
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                              <Play className="w-4 h-4 ml-0.5" />
+                            </div>
                           </div>
                         </div>
                       </div>

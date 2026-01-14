@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Deck } from '../types';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { Deck, Flashcard } from '../types';
 import { CardFlip } from './CardFlip';
-import { ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, RotateCcw, Pencil } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, ChevronLeft, ChevronRight, RotateCcw, Pencil, Shuffle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface StudyViewProps {
@@ -14,20 +15,26 @@ interface StudyViewProps {
 export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck, onEdit }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  // Track results by card ID to allow re-answering/navigation without double counting
+  // We use a local state for cards in the current session to support shuffling without mutating the original deck
+  const [sessionCards, setSessionCards] = useState<Flashcard[]>([]);
+  const [isShuffled, setIsShuffled] = useState(false);
+  // Track results by card ID
   const [results, setResults] = useState<Record<string, boolean>>({});
   const [isSessionComplete, setIsSessionComplete] = useState(false);
 
-  const currentCard = deck.cards[currentIndex];
-  // Calculate progress based on current position
-  const progress = ((currentIndex + 1) / deck.cards.length) * 100;
-
+  // Initialize session cards
   useEffect(() => {
+    setSessionCards([...deck.cards]);
     setCurrentIndex(0);
     setIsFlipped(false);
     setResults({});
     setIsSessionComplete(false);
-  }, [deck.id]);
+    setIsShuffled(false);
+  }, [deck.id, deck.cards]);
+
+  const currentCard = sessionCards[currentIndex];
+  // Calculate progress based on current position
+  const progress = sessionCards.length > 0 ? ((currentIndex + 1) / sessionCards.length) * 100 : 0;
 
   // When session completes, update the deck mastery data
   useEffect(() => {
@@ -47,7 +54,25 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
     }
   }, [isSessionComplete]);
 
+  const handleShuffle = () => {
+    const shuffled = [...sessionCards].sort(() => Math.random() - 0.5);
+    setSessionCards(shuffled);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setResults({});
+    setIsShuffled(true);
+    // Visual feedback
+    confetti({
+      particleCount: 30,
+      spread: 50,
+      origin: { y: 0.8 },
+      colors: ['#6366f1', '#a5b4fc']
+    });
+  };
+
   const handleScore = (known: boolean) => {
+    if (!currentCard) return;
+
     // Record result for this card
     setResults(prev => ({
       ...prev,
@@ -55,11 +80,11 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
     }));
 
     // If it's the last card, finish session
-    if (currentIndex >= deck.cards.length - 1) {
+    if (currentIndex >= sessionCards.length - 1) {
       const finalResults = { ...results, [currentCard.id]: known };
       const finalCorrectCount = Object.values(finalResults).filter(v => v).length;
       
-      if (finalCorrectCount > deck.cards.length * 0.7) {
+      if (finalCorrectCount > sessionCards.length * 0.7) {
         confetti({
           particleCount: 100,
           spread: 70,
@@ -78,7 +103,7 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
     if (direction === 'prev' && currentIndex > 0) {
       setIsFlipped(false);
       setCurrentIndex(prev => prev - 1);
-    } else if (direction === 'next' && currentIndex < deck.cards.length - 1) {
+    } else if (direction === 'next' && currentIndex < sessionCards.length - 1) {
       setIsFlipped(false);
       setCurrentIndex(prev => prev + 1);
     }
@@ -89,6 +114,7 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
     setIsFlipped(false);
     setResults({});
     setIsSessionComplete(false);
+    // Keep the current order (if shuffled, stay shuffled)
   };
 
   if (isSessionComplete) {
@@ -97,7 +123,7 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
     
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] animate-fade-in px-4">
-        <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-sm w-full">
+        <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-sm w-full border border-slate-100">
           <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10" />
           </div>
@@ -133,27 +159,45 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
     );
   }
 
+  if (!currentCard) return null;
+
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] max-w-4xl mx-auto px-4 py-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <button 
-          onClick={onExit}
-          className="p-2 -ml-2 text-slate-400 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <div className="text-center">
-          <h3 className="font-semibold text-slate-800">{deck.title}</h3>
-          <p className="text-xs text-slate-400">{currentIndex + 1} of {deck.cards.length}</p>
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={onExit}
+            className="p-2 -ml-2 text-slate-400 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
         </div>
-        <button 
-          onClick={onEdit}
-          className="p-2 -mr-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors rounded-full"
-          title="Edit Deck"
-        >
-          <Pencil className="w-5 h-5" />
-        </button>
+
+        <div className="text-center flex-1 mx-4">
+          <h3 className="font-semibold text-slate-800 truncate max-w-[200px] sm:max-w-md mx-auto">{deck.title}</h3>
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-xs text-slate-400">{currentIndex + 1} of {sessionCards.length}</p>
+            {isShuffled && <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter">Shuffled</span>}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={handleShuffle}
+            className={`p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors rounded-full ${isShuffled ? 'text-indigo-600 bg-indigo-50' : ''}`}
+            title="Shuffle Cards"
+          >
+            <Shuffle className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={onEdit}
+            className="p-2 -mr-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors rounded-full"
+            title="Edit Deck"
+          >
+            <Pencil className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Progress Bar */}
@@ -193,11 +237,11 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
                  <ChevronLeft className="w-6 h-6" />
              </button>
              <span className="text-xs font-medium tracking-wide">
-               {currentIndex + 1} / {deck.cards.length}
+               {currentIndex + 1} / {sessionCards.length}
              </span>
              <button 
                onClick={() => handleNav('next')} 
-               disabled={currentIndex === deck.cards.length - 1} 
+               disabled={currentIndex === sessionCards.length - 1} 
                className="p-2 hover:bg-slate-100 rounded-full disabled:opacity-30 transition-all"
              >
                  <ChevronRight className="w-6 h-6" />
@@ -208,7 +252,7 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
         {/* Next Desktop */}
         <button 
           onClick={() => handleNav('next')}
-          disabled={currentIndex === deck.cards.length - 1}
+          disabled={currentIndex === sessionCards.length - 1}
           className="hidden md:flex absolute right-0 p-3 rounded-full bg-white shadow-sm border border-slate-100 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 disabled:opacity-0 disabled:pointer-events-none transition-all z-10"
         >
           <ChevronRight className="w-6 h-6" />
@@ -216,7 +260,7 @@ export const StudyView: React.FC<StudyViewProps> = ({ deck, onExit, onUpdateDeck
       </div>
 
       {/* Grading Controls */}
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-8 max-w-md mx-auto w-full">
+      <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-8 max-w-md mx-auto w-full pb-8">
         <button
           onClick={() => handleScore(false)}
           className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600 transition-all group active:scale-95"

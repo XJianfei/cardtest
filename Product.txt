@@ -1,0 +1,58 @@
+# FlashMind AI - Product Design & Functional Specification
+
+## 1. Product Overview
+FlashMind AI is an intelligent study tool designed to reduce the friction of creating educational materials. By leveraging the Gemini API, it transforms broad topics into structured, high-quality flashcard decks in seconds, while also providing robust manual editing and progress tracking features.
+
+## 2. Core Design Principles
+- **Minimalism & Focus**: A clean, distraction-free interface (Slate/Indigo palette) prioritizing the study experience.
+- **Immediate Value**: "Zero to study" in under 10 seconds via AI generation.
+- **Positive Reinforcement**: Use of visual feedback (confetti, progress bars) to motivate learners.
+- **Mobile First**: Fully responsive layouts ensuring students can study on the go.
+
+## 3. Functional Modules
+
+### 3.1 AI Generation Engine (`services/geminiService.ts`)
+- **Model**: Utilizes `gemini-3-flash-preview` for its speed and high reasoning capability for educational content.
+- **Logic**: 
+    - Takes a user-defined topic and requested card count.
+    - Employs a structured JSON response schema (`responseMimeType: "application/json"`) to ensure data integrity.
+    - Generates 'front' (concept/question) and 'back' (concise explanation/answer).
+- **Error Handling**: Graceful fallbacks for API failures with user-facing alerts.
+
+### 3.2 Study Session Logic (`components/StudyView.tsx`)
+- **Session State**: Maintains a local `sessionCards` array to protect original deck order unless explicitly modified.
+- **Shuffle Feature**: 
+    - **Logic**: Implements a randomization algorithm (Shuffle) that resets the `currentIndex` and `results` map.
+    - **Visual**: Displays a "Shuffled" badge and triggers a subtle confetti burst to confirm the action.
+- **Grading System**:
+    - "Got it" (Mastered): Sets the card's mastered status to true.
+    - "Still Learning": Sets mastered status to false.
+- **Progress Tracking**: Real-time progress bar calculated as `(current_card / total_cards) * 100`.
+- **Completion**: Aggregates session results and updates the global deck state once the session ends.
+
+### 3.3 Dashboard & Deck Management (`App.tsx`)
+- **State Persistence**: Syncs all deck data to `localStorage` on every change.
+- **View Routing**: An enum-based routing system (`AppView`) manages transitions between Dashboard, Editor, Study, and Stats views without page reloads.
+- **Theming**: Dynamic theme colors (e.g., Indigo, Emerald) assigned to decks for visual categorization.
+
+### 3.4 Data Analytics (`components/DeckStats.tsx` & `GlobalStats.tsx`)
+- **Mastery Calculation**: `(mastered_cards / total_cards) * 100`.
+- **Visualization**: Circular SVG progress charts with CSS transitions for smooth animation.
+- **Focused Review**: Automatically identifies and lists "Focus Areas"—cards that the user hasn't yet mastered.
+
+### 3.5 UI Components
+- **CardFlip**: Employs CSS 3D transforms (`rotateY`) and `backface-visibility: hidden` for a realistic card flipping interaction.
+- **NavBars**: Sticky headers and mobile-responsive layouts ensure controls are always accessible.
+
+## 4. Technical Stack
+- **Framework**: React 19 (ESM via esm.sh).
+- **Styling**: Tailwind CSS (Utility-first styling).
+- **Icons**: Lucide React.
+- **AI**: Google Gemini API (@google/genai).
+- **Effects**: Canvas Confetti.
+
+## 5. Future Roadmap
+- Spaced Repetition System (SRS) integration (Leitner system).
+- Support for image-based cards using Gemini Multimodal.
+- Export/Import decks via JSON or CSV.
+- Audio synthesis for language learning decks.
